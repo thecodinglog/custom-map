@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        .back {
+            width: 1024px;
+            height: 580px;
+            background-image: url(fac_map.png);
+
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+
+        .cav {
+            height: 100%;
+            width: 100%;
+            border: 1px solid red
+        }
+    </style>
+    <script>
+        function setupCanvas(canvas) {
+            // Get the device pixel ratio, falling back to 1.
+            var dpr = window.devicePixelRatio || 1;
+            // Get the size of the canvas in CSS pixels.
+            var rect = canvas.getBoundingClientRect();
+            // Give the canvas pixel dimensions of their CSS
+            // size * the device pixel ratio.
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            var ctx = canvas.getContext('2d');
+            // Scale all drawing operations by the dpr, so you
+            // don't have to worry about the difference.
+            ctx.scale(dpr, dpr);
+            return ctx;
+        }
+
+
+        function drawCircle(x, y) {
+            debugger;
+   
+            var context = setupCanvas(document.getElementById('myCanvas'));
+            var centerX = x;
+            var centerY = y;
+            var radius = 5;
+
+            context.beginPath();
+            context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+            context.fillStyle = 'red';
+            context.fill();
+            context.lineWidth = 1;
+            context.strokeStyle = '#003300';
+            context.stroke();
+        }
+        function drawTest() {
+            drawCircle(5, 5);
+        }
+    </script>
+</head>
+
+<body style="margin: 0px; padding:0px">
+    <div id="main" class="back">
+        <canvas id="myCanvas" class="cav"></canvas>
+    </div>
+
+
+    <a href="#" onclick="drawTest()">draw</a>
+
+
+</body>
+
+</html>

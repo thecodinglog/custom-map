@@ -1,0 +1,133 @@
+<html>
+
+<head>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script>
+        var data = new Array();
+
+        var latA = 0;
+        var latB = 0;
+        var lonA = 0;
+        var lonB = 0;
+
+        function convertToXYOfLon(x) {
+            return a * x + v;
+        }
+
+        function position() {
+            var cX = event.clientX;
+            var cY = event.clientY;
+            var gps = prompt("GPS");
+            var lat = Number(gps.split(",")[0]);
+            var lon = Number(gps.split(",")[1]);
+
+            data.push({ x: cX, y: cY, lat: lat, lon: lon })
+
+            console.info(data);
+        }
+        function calc(lat, lon) {
+            if (data.length < 2) return;
+            var y = calcLat(lat);
+            var x = calcLon(lon);
+            return { x: x, y: y };
+        }
+        function calcLon(lon) {
+            var lonData = { x1: data[0]['x'], x2: data[1]['x'], lon1: data[0]['lon'], lon2: data[1]['lon'] };
+
+            var a = (lonData['lon2'] - lonData['lon1']) / (lonData['x2'] - lonData['x1']);
+
+            console.info('a', a);
+            var b = lonData['lon1'] - (a * lonData['x1']);
+            console.info('b', b);
+
+            var x = (lon - b) / a;
+            console.info('x', x);
+
+            return x;
+        }
+        function calcLat(lat) {
+            debugger;
+            var lonData = { y1: data[0]['y'], y2: data[1]['y'], lat1: data[0]['lat'], lat2: data[1]['lat'] };
+
+            var a = (lonData['lat2'] - lonData['lat1']) / ((lonData['y2']*-1) - (lonData['y1']*-1));
+
+            console.info('a', a);
+            var b = lonData['lat1'] - (a * lonData['y1']);
+            console.info('b', b);
+
+            var x = (lat - b) / a;
+            console.info('x', x);
+
+            return x;
+        }
+
+
+        function find() {
+            var gps = prompt("찾을 좌표?");
+            var lat = Number(gps.split(",")[0]);
+            var lon = Number(gps.split(",")[1]);
+
+            var xy = calc(lat, lon);
+
+            console.info(xy);
+            drawCircle(xy['x'], xy['y']);
+
+        }
+        function drawTest(){
+            drawCircle(5,5);
+        }
+        function drawCircle(x, y) {
+           
+            var context = setupCanvas(document.getElementById('myCanvas'));
+            var centerX = x;
+            var centerY = y;
+            var radius = 5;
+
+            context.beginPath();
+            context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+            context.fillStyle = 'red';
+            context.fill();
+            context.lineWidth = 1;
+            context.strokeStyle = '#003300';
+            context.stroke();
+        }
+        function setupCanvas(canvas) {
+            // Get the device pixel ratio, falling back to 1.
+            var dpr = window.devicePixelRatio || 1;
+            // Get the size of the canvas in CSS pixels.
+            var rect = canvas.getBoundingClientRect();
+            // Give the canvas pixel dimensions of their CSS
+            // size * the device pixel ratio.
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            var ctx = canvas.getContext('2d');
+            // Scale all drawing operations by the dpr, so you
+            // don't have to worry about the difference.
+            ctx.scale(dpr, dpr);
+            return ctx;
+        }
+    </script>
+    <style>
+        .back {
+            width: 1024px;
+            height: 580px;
+            background-color: powderblue;
+            background-image: url(fac_map.png);
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+    </style>
+</head>
+
+<body style="margin: 0px; padding:0px">
+    <div id="main" class="back" onclick="position()">
+        <canvas id="myCanvas" style="width:100%; height:100%"></canvas>
+    </div>
+    <a href="#" onclick="find()">find</a>
+    <a href="#" onclick="drawTest()">draw</a>
+    35.113978, 129.072910
+    35.109932, 129.073801
+    35.113319, 129.074262
+</body>
+
+</html>
