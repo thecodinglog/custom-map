@@ -11,6 +11,53 @@
         var lonA = 0;
         var lonB = 0;
 
+        var resultLon;
+        var resultLat;
+
+        const utils = {
+            sum: (arr) => arr.reduce((total, amount) => total + amount),
+            avg: (arr) => utils.sum(arr) / arr.length
+        }
+
+        const LinearRegression = (data) => {
+
+            let
+                x_avg, 		// average of independent variable x
+                y_avg, 		// average of dependent variable y
+                num, 		  // numerator : Sum of (xi - x)(yi - y)
+                den, 	    // denominator : (xi - x)**2
+                m, 		    // slope
+                b, 		    // intercept
+                sse 		  // the sum of squared error: sum of (y - (mx + b))
+
+            x_avg = utils.avg(data.x)
+
+            y_avg = utils.avg(data.y)
+            num = utils.sum(data.x.map((x, i) => (x - x_avg) * (data.y[i] - y_avg)))
+            den = utils.sum(data.x.map(x => ((x - x_avg) ** 2)))
+
+
+            if (num === 0 && den === 0) {
+                m = 0
+                b = data.x[0]
+
+            }
+            else {
+                m = num / den
+                b = y_avg - m * x_avg
+            }
+
+
+            sse = utils.sum(data.y.map((y, i) => (y - (m * data.x[i] + b)) * 2))
+
+            return {
+                slope: m,
+                intercept: b,
+                y: `${m}x + ${b}`,
+                SSE: `${sse}`
+            }
+        }
+
         function convertToXYOfLon(x) {
             return a * x + v;
         }
@@ -28,40 +75,38 @@
         }
         function calc(lat, lon) {
             if (data.length < 2) return;
-            var y = calcLat(lat);
-            var x = calcLon(lon);
+
+            var regDataXArray = new Array();
+            var regDataLonArray = new Array();
+
+            var regDataYArray = new Array();
+            var regDataLatArray = new Array();
+
+            data.forEach(function (item, index, array) {
+                regDataXArray.push(item.x);
+                regDataLonArray.push(item.lon);
+            })
+
+            data.forEach(function (item, index, array) {
+                regDataYArray.push(item.y);
+                regDataLatArray.push(item.lat);
+            })
+
+            var regDataLon = { x: regDataXArray, y: regDataLonArray }
+            var regDataLat = { x: regDataYArray, y: regDataLatArray }
+
+            resultLon = LinearRegression(regDataLon);
+            console.info(resultLon);
+            resultLat = LinearRegression(regDataLat);
+            console.info(resultLat);
+            debugger;
+            var y = calcPosition(lat, resultLat);
+            var x = calcPosition(lon, resultLon);
             return { x: x, y: y };
         }
-        function calcLon(lon) {
-            var lonData = { x1: data[0]['x'], x2: data[1]['x'], lon1: data[0]['lon'], lon2: data[1]['lon'] };
-
-            var a = (lonData['lon2'] - lonData['lon1']) / (lonData['x2'] - lonData['x1']);
-
-            console.info('a', a);
-            var b = lonData['lon1'] - (a * lonData['x1']);
-            console.info('b', b);
-
-            var x = (lon - b) / a;
-            console.info('x', x);
-
-            return x;
+        function calcPosition(gpsPosition, resultFunction) {
+            return (gpsPosition - resultFunction.intercept) / resultFunction.slope;
         }
-        function calcLat(lat) {
-            debugger;
-            var lonData = { y1: data[0]['y'], y2: data[1]['y'], lat1: data[0]['lat'], lat2: data[1]['lat'] };
-
-            var a = (lonData['lat2'] - lonData['lat1']) / ((lonData['y2']*-1) - (lonData['y1']*-1));
-
-            console.info('a', a);
-            var b = lonData['lat1'] - (a * lonData['y1']);
-            console.info('b', b);
-
-            var x = (lat - b) / a;
-            console.info('x', x);
-
-            return x;
-        }
-
 
         function find() {
             var gps = prompt("찾을 좌표?");
@@ -71,15 +116,15 @@
             var xy = calc(lat, lon);
 
             console.info(xy);
-            $("#result").html(xy['x'] +', '+ xy['y']);
+            $("#result").html(xy['x'] + ', ' + xy['y']);
             drawCircle(xy['x'], xy['y']);
 
         }
-        function drawTest(){
-            drawCircle(5,5);
+        function drawTest() {
+            drawCircle(5, 5);
         }
         function drawCircle(x, y) {
-           
+
             var context = setupCanvas(document.getElementById('myCanvas'));
             var centerX = x;
             var centerY = y;
@@ -108,10 +153,10 @@
             ctx.scale(dpr, dpr);
             return ctx;
         }
-        function refreshPosition(){
+        function refreshPosition() {
             var cX = event.clientX;
             var cY = event.clientY;
-            $("#currentXY").html(cX +','+ cY);
+            $("#currentXY").html(cX + ',' + cY);
         }
     </script>
     <style>
@@ -131,17 +176,21 @@
         <canvas id="myCanvas" style="width:100%; height:100%"></canvas>
     </div>
     <div id="currentXY">
-        
+
     </div>
     <div id="result">
 
     </div>
     <a href="#" onclick="find()">find</a>
     <a href="#" onclick="drawTest()">draw</a>
+<br>
+    &nbsp;35.114835, 129.071096<br>
+    &nbsp;35.112445, 129.068418<br>
+    &nbsp;35.109963, 129.073797<br>
+    &nbsp;35.112737, 129.075466<br>
     
-    35.113978, 129.072910
-    35.109932, 129.073801
-    35.113319, 129.074262
+    &nbsp;35.111924, 129.073258
+
 </body>
 
 </html>
