@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script>
+        var data = new Array();
+
+        var latA = 0;
+        var latB = 0;
+        var lonA = 0;
+        var lonB = 0;
+
+        var resultLon;
+        var resultLat;
+
+        const utils = {
+            sum: (arr) => arr.reduce((total, amount) => total + amount),
+            avg: (arr) => utils.sum(arr) / arr.length
+        }
+
+        const LinearRegression = (data) => {
+
+            let
+                x_avg, 		// average of independent variable x
+                y_avg, 		// average of dependent variable y
+                num, 		  // numerator : Sum of (xi - x)(yi - y)
+                den, 	    // denominator : (xi - x)**2
+                m, 		    // slope
+                b, 		    // intercept
+                sse 		  // the sum of squared error: sum of (y - (mx + b))
+
+            x_avg = utils.avg(data.x)
+
+            y_avg = utils.avg(data.y)
+            num = utils.sum(data.x.map((x, i) => (x - x_avg) * (data.y[i] - y_avg)))
+            den = utils.sum(data.x.map(x => ((x - x_avg) ** 2)))
+
+
+            if (num === 0 && den === 0) {
+                m = 0
+                b = data.x[0]
+
+            }
+            else {
+                m = num / den
+                b = y_avg - m * x_avg
+            }
+
+
+            sse = utils.sum(data.y.map((y, i) => (y - (m * data.x[i] + b)) * 2))
+
+            return {
+                slope: m,
+                intercept: b,
+                y: `${m}x + ${b}`,
+                SSE: `${sse}`
+            }
+        }
+
+        function convertToXYOfLon(x) {
+            return a * x + v;
+        }
+
+        function position() {
+            var cX = event.clientX;
+            var cY = event.clientY;
+            var gps = prompt("GPS");
+            var lat = Number(gps.split(",")[0]);
+            var lon = Number(gps.split(",")[1]);
+
+            data.push({ x: cX, y: cY, lat: lat, lon: lon })
+
+            console.info(data);
+        }
+        function calc(lat, lon) {
+            if (data.length < 2) return;
+
+            var regDataXArray = new Array();
+            var regDataLonArray = new Array();
+
+            var regDataYArray = new Array();
+            var regDataLatArray = new Array();
+
+            data.forEach(function (item, index, array) {
+                regDataXArray.push(item.x);
+                regDataLonArray.push(item.lon);
+            })
+
+            data.forEach(function (item, index, array) {
+                regDataYArray.push(item.y);
+                regDataLatArray.push(item.lat);
+            })
+
+            var regDataLon = { x: regDataXArray, y: regDataLonArray }
+            var regDataLat = { x: regDataYArray, y: regDataLatArray }
+
+            resultLon = LinearRegression(regDataLon);
+            console.info(resultLon);
+            resultLat = LinearRegression(regDataLat);
+            console.info(resultLat);
+            debugger;
+            var y = calcPosition(lat, resultLat);
+            var x = calcPosition(lon, resultLon);
+            return { x: x, y: y };
+        }
+        function calcPosition(gpsPosition, resultFunction) {
+            return (gpsPosition - resultFunction.intercept) / resultFunction.slope;
+        }
+
+        function find() {
+            var gps = prompt("찾을 좌표?");
+            var lat = Number(gps.split(",")[0]);
+            var lon = Number(gps.split(",")[1]);
+
+            var xy = calc(lat, lon);
+
+            console.info(xy);
+            $("#result").html(xy['x'] + ', ' + xy['y']);
+            drawCircle(xy['x'], xy['y']);
+
+        }
+        function drawTest() {
+            drawCircle(5, 5);
+        }
+        function drawCircle(x, y) {
+
+            var context = setupCanvas(document.getElementById('myCanvas'));
+            var centerX = x;
+            var centerY = y;
+            var radius = 5;
+
+            context.beginPath();
+            context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+            context.fillStyle = 'red';
+            context.fill();
+            context.lineWidth = 1;
+            context.strokeStyle = '#003300';
+            context.stroke();
+        }
+        function setupCanvas(canvas) {
+            // Get the device pixel ratio, falling back to 1.
+            var dpr = window.devicePixelRatio || 1;
+            // Get the size of the canvas in CSS pixels.
+            var rect = canvas.getBoundingClientRect();
+            // Give the canvas pixel dimensions of their CSS
+            // size * the device pixel ratio.
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            var ctx = canvas.getContext('2d');
+            // Scale all drawing operations by the dpr, so you
+            // don't have to worry about the difference.
+            ctx.scale(dpr, dpr);
+            return ctx;
+        }
+        function refreshPosition() {
+            var cX = event.clientX;
+            var cY = event.clientY;
+            $("#currentXY").html(cX + ',' + cY);
+        }
+    </script>
+    <style>
+        .back {
+            width: 1024px;
+            height: 580px;
+            background-color: powderblue;
+            background-image: url(fac_map.png);
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+    </style>
+</head>
+
+<body style="margin: 0px; padding:0px">
+    <div id="main" class="back" onclick="position()" onmousemove="refreshPosition()">
+        <canvas id="myCanvas" style="width:100%; height:100%"></canvas>
+    </div>
+    <div id="currentXY">
+
+    </div>
+    <div id="result">
+
+    </div>
+    <a href="#" onclick="find()">find</a>
+    <a href="#" onclick="drawTest()">draw</a>
+<br>
+    &nbsp;35.114835, 129.071096<br>
+    &nbsp;35.112445, 129.068418<br>
+    &nbsp;35.109963, 129.073797<br>
+    &nbsp;35.112737, 129.075466<br>
+    
+    &nbsp;35.111924, 129.073258
+
+</body>
+
+</html>
