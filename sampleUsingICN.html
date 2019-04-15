@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="common.js"></script>
+    <script>
+        var data = new Array();
+
+        const targetLon = 35.1; //부산
+        // km
+        const rOfEarth = 6371.009;
+        const length_round = 2 * Math.PI * rOfEarth;
+        const distancePerLat = length_round / 360;
+        const distancePerLon = Math.cos(targetLon * Math.PI / 180) * length_round / 360;
+
+        let theta;
+        let lonQuation;
+        let latQuation;
+
+        function convertToXYOfLon(x) {
+            return a * x + v;
+        }
+
+        function position() {
+            var cX = event.clientX;
+            var cY = event.clientY;
+            var gps = prompt("GPS");
+            var lat = Number(gps.split(",")[0]);
+            var lon = Number(gps.split(",")[1]);
+
+            data.push({ x: cX, y: cY, lat: lat, lon: lon })
+
+            console.info(data);
+
+            tryBuildEquation();
+
+        }
+
+        function unitQualToLat(lonValue) {
+            return lonValue * distancePerLon / distancePerLat;
+        }
+        function unitQualToLon(LatValue) {
+            return LatValue * distancePerLat / distancePerLon;
+        }
+
+        function tryBuildEquation() {
+            if (data.length < 3) return;
+
+            theta = calcTheta(unitQualToLat(data[0].lon), data[0].lat, unitQualToLat(data[1].lon), data[1].lat, true) * -1;
+
+            let tempCoordi = calcCoordinatesAfterRotation(unitQualToLat(data[0].lon), data[0].lat, unitQualToLat(data[1].lon), data[1].lat, theta, true);
+            tempCoordi.x = unitQualToLon(tempCoordi.x);
+            data[1]['lon_rotated'] = tempCoordi.x;
+            data[1]['lat_rotated'] = tempCoordi.y;
+
+            let tempCoordi2 = calcCoordinatesAfterRotation(unitQualToLat(data[0].lon), data[0].lat, unitQualToLat(data[2].lon), data[2].lat, theta, true);
+            tempCoordi2.x = unitQualToLon(tempCoordi2.x);
+            data[2]['lon_rotated'] = tempCoordi2.x;
+            data[2]['lat_rotated'] = tempCoordi2.y;
+
+
+            debugger;
+            lonQuation = makeLinearEquation(data[0].lon, data[0].x, data[1].lon_rotated, data[1].x);
+            latQuation = makeLinearEquation(data[0].lat, data[0].y, data[2].lat_rotated, data[2].y);
+
+
+
+        }
+        function calc(lat, lon) {
+            let tempCoordi = calcCoordinatesAfterRotation(unitQualToLat(data[0].lon), data[0].lat, unitQualToLat(lon), lat, theta, true);
+            tempCoordi.x = unitQualToLon(tempCoordi.x);
+
+            let x = lonQuation.slope * tempCoordi.x + lonQuation.intercept;
+            let y = latQuation.slope * tempCoordi.y + latQuation.intercept;
+            return { x: x, y: y };
+
+        }
+
+
+        function find() {
+            var gps = prompt("찾을 좌표?");
+            var lat = Number(gps.split(",")[0]);
+            var lon = Number(gps.split(",")[1]);
+
+            var xy = calc(lat, lon);
+
+            console.info(xy);
+            $("#result").html(xy['x'] + ', ' + xy['y']);
+            drawCircle(xy['x'], xy['y']);
+
+        }
+
+        function drawCircle(x, y) {
+
+            var context = setupCanvas(document.getElementById('myCanvas'));
+            var centerX = x;
+            var centerY = y;
+            var radius = 5;
+
+            context.beginPath();
+            context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+            context.fillStyle = 'red';
+            context.fill();
+            context.lineWidth = 1;
+            context.strokeStyle = '#003300';
+            context.stroke();
+        }
+        function setupCanvas(canvas) {
+            // Get the device pixel ratio, falling back to 1.
+            var dpr = window.devicePixelRatio || 1;
+            // Get the size of the canvas in CSS pixels.
+            var rect = canvas.getBoundingClientRect();
+            // Give the canvas pixel dimensions of their CSS
+            // size * the device pixel ratio.
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            var ctx = canvas.getContext('2d');
+            // Scale all drawing operations by the dpr, so you
+            // don't have to worry about the difference.
+            ctx.scale(dpr, dpr);
+            return ctx;
+        }
+        function refreshPosition() {
+            var cX = event.clientX;
+            var cY = event.clientY;
+            $("#currentXY").html(cX + ',' + cY);
+        }
+
+        function inputTestData() {
+            data.push({ x: 308, y: 349, lat: 37.483515, lon: 126.636607 });
+            data.push({ x: 547, y: 348, lat: 37.482868, lon: 126.637712 });
+            data.push({ x: 548, y: 440, lat: 37.482442, lon: 126.637326 });
+
+        }
+    </script>
+    <style>
+        .back {
+            width: 1024px;
+            height: 580px;
+            background-color: powderblue;
+            background-image: url(fac_map_icn.jpg);
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+    </style>
+</head>
+
+<body style="margin: 0px; padding:0px">
+    <div id="main" class="back" onclick="position()" onmousemove="refreshPosition()">
+        <canvas id="myCanvas" style="width:100%; height:100%"></canvas>
+    </div>
+    <div id="currentXY">
+
+    </div>
+    <div id="result">
+
+    </div>
+    <a href="#" onclick="find()">find</a>
+    &nbsp;
+    <a href="#" onclick="inputTestData()">inputTestData</a>
+    <a href="#" onclick="tryBuildEquation()">tryBuildEquation</a>
+
+    <br>
+    &nbsp;37.483515, 126.636607<br>
+    &nbsp;37.482868, 126.637712<br>
+    &nbsp;37.482442, 126.637326<br>
+</body>
+
+</html>
