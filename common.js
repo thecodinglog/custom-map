@@ -9,8 +9,8 @@
  * @param {boolean} is_rad 리턴받을 각도가 Rad 여부
  */
 function calcTheta(origin_x, origin_y, x, y, is_rad) {
-    const a = x - origin_x;
-    const b = y - origin_y;
+    const a = y - origin_y;
+    const b = x - origin_x;
 
     const theta = Math.atan(a / b);
 

@@ -7,6 +7,17 @@
     <script>
         var data = new Array();
 
+        const targetLon = 35.1; //부산
+        // km
+        const rOfEarth = 6371.009;
+        const length_round = 2 * Math.PI * rOfEarth;
+        const distancePerLat = length_round / 360;
+        const distancePerLon = Math.cos(targetLon * Math.PI / 180) * length_round / 360;
+
+        let theta;
+        let lonQuation;
+        let latQuation;
+
         function convertToXYOfLon(x) {
             return a * x + v;
         }
@@ -26,45 +37,46 @@
 
         }
 
-        function tryBuildEquation(){
-            if (data.length < 2) return;
-            
+        function unitQualToLat(lonValue) {
+            return lonValue * distancePerLon / distancePerLat;
+        }
+        function unitQualToLon(LatValue) {
+            return LatValue * distancePerLat / distancePerLon;
+        }
+
+        function tryBuildEquation() {
+            if (data.length < 3) return;
+
+            theta = calcTheta(unitQualToLat(data[0].lon), data[0].lat, unitQualToLat(data[1].lon), data[1].lat, true) * -1;
+
+            let tempCoordi = calcCoordinatesAfterRotation(unitQualToLat(data[0].lon), data[0].lat, unitQualToLat(data[1].lon), data[1].lat, theta, true);
+            tempCoordi.x = unitQualToLon(tempCoordi.x);
+            data[1]['lon_rotated'] = tempCoordi.x;
+            data[1]['lat_rotated'] = tempCoordi.y;
+
+            let tempCoordi2 = calcCoordinatesAfterRotation(unitQualToLat(data[0].lon), data[0].lat, unitQualToLat(data[2].lon), data[2].lat, theta, true);
+            tempCoordi2.x = unitQualToLon(tempCoordi2.x);
+            data[2]['lon_rotated'] = tempCoordi2.x;
+            data[2]['lat_rotated'] = tempCoordi2.y;
+
+
+            debugger;
+            lonQuation = makeLinearEquation(data[0].lon, data[0].x, data[1].lon_rotated, data[1].x);
+            latQuation = makeLinearEquation(data[0].lat, data[0].y, data[2].lat_rotated, data[2].y);
+
+
 
         }
         function calc(lat, lon) {
-            if (data.length < 2) return;
+            let tempCoordi = calcCoordinatesAfterRotation(unitQualToLat(data[0].lon), data[0].lat, unitQualToLat(lon), lat, theta, true);
+            tempCoordi.x = unitQualToLon(tempCoordi.x);
 
-            var regDataXArray = new Array();
-            var regDataLonArray = new Array();
-
-            var regDataYArray = new Array();
-            var regDataLatArray = new Array();
-
-            data.forEach(function (item, index, array) {
-                regDataXArray.push(item.x);
-                regDataLonArray.push(item.lon);
-            })
-
-            data.forEach(function (item, index, array) {
-                regDataYArray.push(item.y);
-                regDataLatArray.push(item.lat);
-            })
-
-            var regDataLon = { x: regDataXArray, y: regDataLonArray }
-            var regDataLat = { x: regDataYArray, y: regDataLatArray }
-
-            resultLon = LinearRegression(regDataLon);
-            console.info(resultLon);
-            resultLat = LinearRegression(regDataLat);
-            console.info(resultLat);
-            debugger;
-            var y = calcPosition(lat, resultLat);
-            var x = calcPosition(lon, resultLon);
+            let x = lonQuation.slope * tempCoordi.x + lonQuation.intercept;
+            let y = latQuation.slope * tempCoordi.y + latQuation.intercept;
             return { x: x, y: y };
+
         }
-        function calcPosition(gpsPosition, resultFunction) {
-            return (gpsPosition - resultFunction.intercept) / resultFunction.slope;
-        }
+
 
         function find() {
             var gps = prompt("찾을 좌표?");
@@ -116,6 +128,13 @@
             var cY = event.clientY;
             $("#currentXY").html(cX + ',' + cY);
         }
+
+        function inputTestData() {
+            data.push({ x: 123, y: 133, lat: 35.114833, lon: 129.071113 });
+            data.push({ x: 554, y: 131, lat: 35.112753, lon: 129.07548 });
+            data.push({ x: 258, y: 474, lat: 35.11134,  lon: 129.070341 });
+
+        }
     </script>
     <style>
         .back {
@@ -141,13 +160,15 @@
     </div>
     <a href="#" onclick="find()">find</a>
     <a href="#" onclick="drawTest()">draw</a>
-<br>
-    &nbsp;35.114835, 129.071096<br>
-    &nbsp;35.112445, 129.068418<br>
-    &nbsp;35.109963, 129.073797<br>
-    &nbsp;35.112737, 129.075466<br>
-    
-    &nbsp;35.111924, 129.073258
+    <a href="#" onclick="inputTestData()">inputTestData</a>
+    <a href="#" onclick="tryBuildEquation()">tryBuildEquation</a>
+
+    <br>
+    &nbsp;35.114833, 129.071113<br>
+    &nbsp;35.112753, 129.075480<br>
+    &nbsp;35.111340, 129.070341<br>
+
+
 
 </body>
 
