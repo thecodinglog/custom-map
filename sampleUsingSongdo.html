@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="commonSongdo.js"></script>
+    <style>
+        .back {
+            width: 1024px;
+            height: 480px;
+            background-color: powderblue;
+            background-image: url(songdo.jpg);
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+    </style>
+    <script>
+        let data = new Array();
+
+        let theta;
+        let lonQuation;
+        let latQuation;
+        const targetLon = 37.3; //인천의 위도
+        const radiusOfEarth = 6371.009; //지구 반지름(km)
+        const circumferenceOfEarth = 2 * Math.PI * radiusOfEarth; //지구 둘레
+        const distancePerLat = circumferenceOfEarth / 360; //경도당 거리(km)
+        const distancePerLon = Math.cos(targetLon * Math.PI / 180) * circumferenceOfEarth / 360; //위도당 거리(km)
+
+        function process(){
+            if (data.length < 3) return;
+            
+            // 각도 계산
+            theta = calcTheta(convertUnitToLat(data[0].lon), data[0].lat, convertUnitToLat(data[1].lon), data[1].lat, true) * -1;
+            
+            // 회전후 좌표 계산
+            // 두 번째 입력한 위치 회전변환
+            let tempCoordi = calcCoordinatesAfterRotation(convertUnitToLat(data[0].lon), data[0].lat, convertUnitToLat(data[1].lon), data[1].lat, theta, true);
+            tempCoordi.x = convertUnitToLon(tempCoordi.x);
+            data[1].lon_rotated = tempCoordi.x;
+            data[1].lat_rotated = tempCoordi.y;
+
+            // 세 번째 입력한 위치 회전변환
+            let tempCoordi2 = calcCoordinatesAfterRotation(convertUnitToLat(data[0].lon), data[0].lat, convertUnitToLat(data[2].lon), data[2].lat, theta, true);
+            tempCoordi2.x = convertUnitToLon(tempCoordi2.x);
+            data[2].lon_rotated = tempCoordi2.x;
+            data[2].lat_rotated = tempCoordi2.y;
+
+
+            // 위도, 경도 방정식 만들기
+            lonQuation = makeLinearEquation(data[0].lon, data[0].x, data[1].lon_rotated, data[1].x);
+            latQuation = makeLinearEquation(data[0].lat, data[0].y, data[2].lat_rotated, data[2].y);
+        }
+
+        function inputTestData() {
+            data.push({x: 307, y: 46, lat: 37.394709, lon: 126.638884});
+            data.push({x: 956, y: 42, lat: 37.391163, lon: 126.644613});
+            data.push({x: 503, y: 367, lat: 37.391419, lon: 126.638358});
+        }
+        
+    </script>
+</head>
+
+<body style="margin: 0px; padding:0px">
+    <div id="main" class="back" onclick="mapOnclickHandler()">
+        <canvas id="myCanvas" style="width:100%; height:100%"></canvas>
+    </div>
+    <div id="result">
+    </div>
+    <a href="#" onclick="find()">find</a>
+    <a href="#" onclick="inputTestData()">inputTestData</a>
+    <a href="#" onclick="process()">process</a>
+</body>
+</html>

@@ -1,4 +1,3 @@
-
 /**
  * 원점과 y값이 같은 임의의 점을 잇는 선분과, 원점과 지정한 점을 잇는 선분이 이루는 각도
  * The angle between the line connecting the origin and any point with the same y value and the line connecting the origin and the specified point.
